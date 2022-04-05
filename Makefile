@@ -16,16 +16,17 @@ MKDIR = @mkdir -p $(@D)
 
 CFLAGS = -ggdb3 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 
 CFLAGS += -mfloat-abi=softfp -MD -std=c99 -Wextra -Wall -Wno-missing-braces
+DEPFLAGS = -MT $@ -MMD -MP
 
 all: bin/$(PROJECT).elf
 
 $(OBJ)%.o: src/%.c          
 	$(MKDIR)              
-	$(CC) -o $@ $^ -c -I$(INC) $(CFLAGS)
+	$(CC) -o $@ $< -c -I$(INC) $(CFLAGS) $(DEPFLAGS)
 	
 bin/$(PROJECT).elf: $(OBJS) 
 	$(MKDIR)           
-	$(CC) -o $@ $^ $(CFLAGS) -Wl,-T $(LD_SCRIPT) -Wl,-e Reset_Handler
+	$(CC) -o $@ $^ $(CFLAGS) $(DEPFLAGS) -Wl,-T$(LD_SCRIPT) -Wl,-eReset_Handler
 	$(OBJCOPY) -O binary $@ bin/$(PROJECT).bin 
 
 flash:
@@ -34,6 +35,7 @@ flash:
 debug:
 	$(DEBUGGER) --tui bin/$(PROJECT).elf -ex "target remote :3333" -ex "monitor reset halt"
 
+-include $(OBJS:.o=.d)
 
 clean:
 	-$(RM) obj

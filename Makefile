@@ -32,9 +32,6 @@ bin/$(PROJECT).elf: $(OBJS)
 flash:
 	$(FLASHER) -S $(DEV) bin/$(PROJECT).bin
 
-debug:
-	$(DEBUGGER) --tui bin/$(PROJECT).elf -ex "target remote :3333" -ex "monitor reset halt"
-
 -include $(OBJS:.o=.d)
 
 clean:

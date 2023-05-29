@@ -14,7 +14,7 @@ OBJCOPY = arm-none-eabi-objcopy
 RM = rm -rf
 MKDIR = @mkdir -p $(@D)
 
-CFLAGS = -ggdb3 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -nostdlib -nostartfiles
+CFLAGS = -ggdb3 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -nostdlib 
 CFLAGS += -mfloat-abi=softfp -MD -std=c99 -Wextra -Wall -Wno-missing-braces
 DEPFLAGS = -MT $@ -MMD -MP
 

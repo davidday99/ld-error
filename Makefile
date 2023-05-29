@@ -8,7 +8,6 @@ INC = inc/
 LD_SCRIPT = TM4C123GH6PM.ld
 
 CC = arm-none-eabi-gcc
-LD = arm-none-eabi-ld 
 DEBUGGER = arm-none-eabi-gdb
 OBJCOPY = arm-none-eabi-objcopy
 RM = rm -rf

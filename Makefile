@@ -1,39 +1,62 @@
-PROJECT = main
-DEV = /dev/ttyACM0
-FLASHER = lm4flash
-SRCS = $(wildcard src/*.c)
-OBJ = obj/
-OBJS = $(addprefix $(OBJ), $(notdir $(SRCS:.c=.o)))
-INC = inc/
-LD_SCRIPT = TM4C123GH6PM.ld
+PROJECT=main
+
+SRCS=$(wildcard src/*.c) \
+		 $(wildcard src/*.S) \
+		 $(wildcard src/*.s) \
+		 gcc/startup_gcc.c \
+		 gcc/intrinsics.s
+OBJ=obj
+OBJS=$(addprefix $(OBJ)/, \
+	   $(filter-out %.c %.S,$(SRCS:.s=.o)) \
+	   $(filter-out %.s %.S, $(SRCS:.c=.o)) \
+	   $(filter-out %.c %.s, $(SRCS:.S=.o)))
+BIN=build
+INC= -Iinc
+
+LD_SCRIPT=gcc/TM4C123GH6PM.ld 
+DEV=/dev/ttyACM0
+FLASHER=lm4flash
 
 CC = arm-none-eabi-gcc
-DEBUGGER = arm-none-eabi-gdb
 OBJCOPY = arm-none-eabi-objcopy
+
+CFLAGS = -g -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -nostdlib -ffreestanding
+CFLAGS += -mfloat-abi=hard -std=c99 -Wextra -Wall -Wno-missing-braces
+LDFLAGS = -Wl,-T$(LD_SCRIPT) -Wl,-eResetISR -Llib -Wl,-l:libdriver.a
+DEPFLAGS = -MT $@ -MMD -MP
+
 RM = rm -rf
 MKDIR = @mkdir -p $(@D)
 
-CFLAGS = -ggdb3 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -nostdlib 
-CFLAGS += -mfloat-abi=softfp -MD -std=c99 -Wextra -Wall -Wno-missing-braces
-DEPFLAGS = -MT $@ -MMD -MP
+all: $(BIN)/$(PROJECT).elf $(BIN)/$(PROJECT).bin
 
-all: bin/$(PROJECT).elf
+clean:
+	-$(RM) $(OBJ) 
+	-$(RM) $(BIN) 
 
-$(OBJ)%.o: src/%.c          
+$(OBJ)/%.o: %.c          
 	$(MKDIR)              
-	$(CC) -o $@ $< -c -I$(INC) $(CFLAGS) $(DEPFLAGS)
+	$(CC) -o $@ $< -c $(INC) $(CFLAGS) $(DEPFLAGS)
 	
-bin/$(PROJECT).elf: $(OBJS) 
-	$(MKDIR)           
-	$(CC) -o $@ $^ $(CFLAGS) $(DEPFLAGS) -Wl,-T$(LD_SCRIPT) -Wl,-eReset_Handler
-	$(OBJCOPY) -O binary $@ bin/$(PROJECT).bin 
+$(OBJ)/%.o: %.s          
+	$(MKDIR)              
+	$(CC) -o $@ $< -c $(INC) $(CFLAGS) $(DEPFLAGS)
 
-flash:
+$(OBJ)/%.o: %.S          
+	$(MKDIR)              
+	$(CC) -o $@ $< -c $(INC) $(CFLAGS) $(DEPFLAGS)
+
+$(BIN)/$(PROJECT).elf: $(OBJS) 
+	$(MKDIR)           
+	$(CC) -o $@ $^ $(INC) $(CFLAGS) $(DEPFLAGS) $(LDFLAGS)
+
+$(BIN)/$(PROJECT).bin: $(BIN)/$(PROJECT).elf
+	$(OBJCOPY) -O binary $< $@
+
+flash: $(BIN)/$(PROJECT).bin
 	$(FLASHER) -S $(DEV) bin/$(PROJECT).bin
 
 -include $(OBJS:.o=.d)
 
-clean:
-	-$(RM) obj
-	-$(RM) bin
+.PHONY: all clean
 

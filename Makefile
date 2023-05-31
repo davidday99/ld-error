@@ -34,6 +34,9 @@ clean:
 	-$(RM) $(OBJ) 
 	-$(RM) $(BIN) 
 
+flash: $(BIN)/$(PROJECT).bin
+	$(FLASHER) -S $(DEV) $(BIN)/$(PROJECT).bin
+
 $(OBJ)/%.o: %.c          
 	$(MKDIR)              
 	$(CC) -o $@ $< -c $(INC) $(CFLAGS) $(DEPFLAGS)
@@ -53,10 +56,7 @@ $(BIN)/$(PROJECT).elf: $(OBJS)
 $(BIN)/$(PROJECT).bin: $(BIN)/$(PROJECT).elf
 	$(OBJCOPY) -O binary $< $@
 
-flash: $(BIN)/$(PROJECT).bin
-	$(FLASHER) -S $(DEV) bin/$(PROJECT).bin
-
 -include $(OBJS:.o=.d)
 
-.PHONY: all clean
+.PHONY: all clean flash
 
